@@ -91,9 +91,7 @@ DATABASES = {
 database_url = os.environ.get('DATABASE_URL')
 if database_url and database_url.strip():
     DATABASES['default'] = dj_database_url.parse(database_url)
-DATABASES = {
-    'default': dj_database_url.parse(os.environ.get("DATABASE_URL"))
-}
+
 
 
 # Password validation
@@ -136,3 +134,11 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# CSRF trusted origins — needed for the admin to work properly
+CSRF_TRUSTED_ORIGINS = [
+    "https://*.codeinstitute-ide.net",
+    "https://*.herokuapp.com",
+    "http://localhost:8000",          # ← add this for local dev
+    "http://127.0.0.1:8000",          # ← and this one too
+]
