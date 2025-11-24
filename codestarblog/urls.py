@@ -21,7 +21,7 @@ from about import views as about_views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('blog/', blog_views.PostList.as_view(), name='home'),     
+    path('blog/', blog_views.my_blog, name='home'),   
     path('about/', about_views.about_me, name='about'),
     
 
