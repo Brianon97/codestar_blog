@@ -17,6 +17,53 @@ if os.path.isfile('env.py'):
     import env
 
 import blog
+# middleware.py  (create this file in your project)
+from django.http import HttpResponse
+import re
+
+# Common paths bots hammer
+SCANNER_PATHS = [
+    r'^/home/admin',
+    r'^/wp-',
+    r'^/phpmyadmin',
+    r'^/administrator',
+    r'^/laravel',
+    r'^/adminer',
+    r'^/cgi-bin',
+    r'^/\.env',
+    r'^/webadmin',
+]
+
+class BlockScannerMiddleware:
+    def __init__(self, get_response):
+        self.get_response = get_response
+        self.patterns = [re.compile(p, re.IGNORECASE) for p in SCANNER_PATHS]
+
+    def __call__(self, request):
+        path = request.path
+
+        # Check if the path matches a known scanner pattern
+        if any(pattern.search(path) for pattern in self.patterns):
+            user_agent = request.META.get('HTTP_USER_AGENT', '').lower()
+            referer = request.META.get('HTTP_REFERER', '')
+
+            # Let through if:
+            # - It's you (logged into Django admin)
+            # - Or it's a real browser with proper headers
+            # - Or request comes from localhost/heroku internal
+            if (
+                request.user.is_authenticated  # you're logged in as staff
+                or 'heroku' in request.META.get('HTTP_X_FORWARDED_FOR', '')
+                or 'mozilla' in user_agent or 'chrome' in user_agent or 'safari' in user_agent
+                or 'google' in referer.lower()
+            ):
+                # Let your request pass normally
+                pass
+            else:
+                # Bot-like request → silent drop or 403
+                return HttpResponse(status=444)  # or 403, 410, etc.
+
+        return self.get_response(request)
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -49,6 +96,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'codestarblog.middleware.BlockScannerMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -129,6 +177,10 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'   # important for Heroku
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
