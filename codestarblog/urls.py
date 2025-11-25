@@ -18,8 +18,11 @@ from django.contrib import admin
 from django.urls import path, include
 from blog import views as blog_views        # ← your blog views
 from about import views as about_views
+from django.http import HttpResponse
 
 urlpatterns = [
+    # This stops the /home/admin 404 spam without crashing anything
+    path('home/admin', lambda request: HttpResponse(status=200)),  # or 204, 444, whatever
     path('admin/', admin.site.urls),
     path('blog/', blog_views.my_blog, name='home'),   
     path('about/', about_views.about_me, name='about'),
@@ -28,7 +31,6 @@ urlpatterns = [
     
   
     
-    # About page
-    path('about/', about_views.about_me, name='about'),
+
     
 ]
